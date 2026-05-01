@@ -1,0 +1,452 @@
+<!--
+JCAS AI feature expansion changelog:
+- Added personal baseline/anomaly detection, health ledger/resources, unified booking, voice prescription, WhatsApp dispatch, med reminders/orders, lab ledger workflow, medication intelligence, and services booking.
+- All new MVP demo state is stored in localStorage or in existing JS data objects; AI requests continue through /api/ai-insight with featureContext.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>JCAS AI — Japan Care Assist System (介護支援AIシステム)</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/css/base.css"/>
+<link rel="stylesheet" href="assets/css/layout.css"/>
+<link rel="stylesheet" href="assets/css/components.css"/>
+<link rel="stylesheet" href="assets/css/animations.css"/>
+</head>
+<body>
+
+<div class="role-gate" id="role-gate">
+  <div class="role-shell">
+    <div class="role-intro">
+      <h1>Choose Your JCAS AI View</h1>
+      <p>JCAS AI aligns with Japan's Society 5.0 vision — bringing cyber-physical care intelligence to elderly facilities.</p>
+      <div class="society-badges">
+        <span class="badge badge-teal">🇯🇵 Society 5.0 Aligned</span>
+        <span class="badge badge-sky">介護保険 Ready</span>
+        <span class="badge badge-amber">36% of Japan's population will be 65+ by 2040</span>
+      </div>
+    </div>
+    <div class="role-card doctor" onclick="selectRole('doctor')">
+      <div class="role-visual">🩺</div>
+      <span class="role-chip">🩺 Doctor / Admin / Clinical Team</span>
+      <h2>Doctor/Admin Dashboard</h2>
+      <p>Access critical alerts, resident risk review, AI insights, labs, medication records, timelines, and clinical audit history.</p>
+      <div class="role-points">
+        <span>Clinical queues and escalation context</span>
+        <span>Vitals, eMAR, labs, and audit controls</span>
+      </div>
+      <button class="btn btn-primary btn-sm">Enter Doctor/Admin View →</button>
+    </div>
+    <div class="role-card patient" onclick="selectRole('resident')">
+      <div class="role-visual">🏥</div>
+      <span class="role-chip">🏥 Resident / Patient / Family</span>
+      <h2>Patient Dashboard</h2>
+      <p>View personal health summary, AI explanation, doctor visits, care plan, insurance policies, マイナンバー, and government scheme readiness.</p>
+      <div class="role-points">
+        <span>Personal next steps and visit readiness</span>
+        <span>Appointments, services, マイナンバー, and coverage</span>
+      </div>
+      <button class="btn btn-primary btn-sm">Enter Patient View →</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="app-body">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sb-header">
+        <div class="sb-logo">🏥</div>
+        <div class="sb-brand">
+          <div class="sb-brand-name">JCAS AI</div>
+          <div class="sb-brand-ver">介護支援 · Society 5.0</div>
+        </div>
+        <button class="sb-collapse-btn" onclick="toggleSidebar()">⟨</button>
+      </div>
+      <div class="sb-user">
+        <div class="sb-user-card">
+          <div class="sb-av avatar-teal">YH</div>
+          <div class="flex-overflow">
+            <div class="sb-uname">山本 花子</div>
+            <div class="sb-urole">Senior Physician</div>
+          </div>
+        </div>
+      </div>
+      <div class="sb-nav">
+        <div class="sb-section">Main</div>
+        <div class="sb-item active" data-page="dashboard" data-roles="doctor,resident" onclick="nav('dashboard')"><span class="sb-item-ico">📊</span><span class="sb-item-txt">Dashboard</span></div>
+        <div class="sb-item" data-page="residents" data-roles="doctor,resident" data-doctor-label="Residents" data-resident-label="My Profile" onclick="nav('residents')"><span class="sb-item-ico">👥</span><span class="sb-item-txt">Residents</span></div>
+        <div class="sb-item" data-page="alerts" data-roles="doctor" onclick="nav('alerts')"><span class="sb-item-ico">🔔</span><span class="sb-item-txt">Alerts</span><span class="sb-badge" id="sb-alert-badge">3</span></div>
+        <div class="sb-section" data-roles="doctor">Doctor Tools</div>
+        <div class="sb-item" data-page="critical" data-roles="doctor" onclick="nav('critical')"><span class="sb-item-ico">🚨</span><span class="sb-item-txt">Critical Review</span></div>
+        <div class="sb-item" data-page="book" data-roles="doctor" onclick="nav('book')"><span class="sb-item-ico">📅</span><span class="sb-item-txt">Book & Schedule</span></div>
+        <div class="sb-item" data-page="vitals" data-roles="doctor,resident" data-doctor-label="Vitals Monitor" data-resident-label="Add Vitals" onclick="nav('vitals')"><span class="sb-item-ico">💓</span><span class="sb-item-txt">Vitals Monitor</span></div>
+        <div class="sb-item" data-page="emar" data-roles="doctor" onclick="nav('emar')"><span class="sb-item-ico">💊</span><span class="sb-item-txt">eMAR</span></div>
+        <div class="sb-item" data-page="notes" data-roles="doctor" onclick="nav('notes')"><span class="sb-item-ico">📝</span><span class="sb-item-txt">Shift Notes</span></div>
+        <div class="sb-item" data-page="labs" data-roles="doctor,resident" data-doctor-label="Lab Reports" data-resident-label="Add Lab Reports" onclick="nav('labs')"><span class="sb-item-ico">🔬</span><span class="sb-item-txt">Lab Reports</span></div>
+        <div class="sb-item" data-page="ledger" data-roles="doctor" onclick="nav('ledger')"><span class="sb-item-ico">📋</span><span class="sb-item-txt">Ledger & Resources</span></div>
+        <div class="sb-section" data-roles="doctor,resident">Records</div>
+        <div class="sb-item" data-page="timeline" data-roles="doctor" onclick="nav('timeline')"><span class="sb-item-ico">📈</span><span class="sb-item-txt">Timeline</span></div>
+        <div class="sb-item" data-page="careplan" data-roles="doctor,resident" onclick="nav('careplan')"><span class="sb-item-ico">📋</span><span class="sb-item-txt">Care Plan</span></div>
+        <div class="sb-item" data-page="appointments" data-roles="doctor,resident" onclick="nav('appointments')"><span class="sb-item-ico">📅</span><span class="sb-item-txt">Appointments</span></div>
+        <div class="sb-section" data-roles="resident">Services</div>
+        <div class="sb-item" data-page="services" data-roles="resident" onclick="nav('services')"><span class="sb-item-ico">🛎️</span><span class="sb-item-txt">Services</span></div>
+        <div class="sb-item" data-page="insurance" data-roles="resident" onclick="nav('insurance')"><span class="sb-item-ico">🛡️</span><span class="sb-item-txt">Insurance + マイナンバー</span></div>
+        <div class="sb-section" data-roles="doctor">System</div>
+        <div class="sb-item" data-page="audit" data-roles="doctor" onclick="nav('audit')"><span class="sb-item-ico">🔐</span><span class="sb-item-txt">Audit Log</span></div>
+      </div>
+    </div>
+
+    <!-- MAIN AREA -->
+    <div class="app-shell">
+
+      <!-- TOPBAR -->
+      <div class="topbar">
+        <div><div class="tb-title" id="tb-title">JCAS AI Dashboard</div></div>
+        <div class="tb-spacer"></div>
+        <div class="tb-search">
+          <span class="tb-search-ico">🔍</span>
+          <input placeholder="Search residents, meds…"/>
+        </div>
+        <button class="tb-btn" id="top-alert-btn" onclick="nav('alerts')">🔔<span class="tb-alert-dot" id="tb-dot"></span></button>
+        <button class="role-switch" onclick="resetRole()">Switch Role</button>
+        <div class="tb-avatar avatar-teal" id="tb-avatar">YH</div>
+      </div>
+
+      <!-- PAGES -->
+      <div class="main" id="main">
+
+        <!-- DASHBOARD -->
+        <div class="page active" id="page-dashboard">
+          <div class="page-hdr">
+            <div>
+              <div class="page-title" id="dash-greeting">JCAS AI – 介護支援 · Society 5.0 Dashboard</div>
+              <div class="page-sub" id="dash-date"></div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="loadDash()">↻ Refresh</button>
+          </div>
+          <div class="ai-grid">
+            <div class="card ai-hero">
+              <div class="card-hdr z-panel">
+                <div>
+                  <div class="card-ttl" id="dash-ai-title">✨ AI Insight Engine · 田中 健二</div>
+                  <div class="page-sub" id="dash-ai-sub">Groq-powered risk interpretation from manual vitals and JCAS history</div>
+                </div>
+                <span class="ai-risk medium" id="dash-ai-risk">MEDIUM RISK</span>
+              </div>
+              <div class="ai-hero-body">
+                <div class="ai-hero-copy">
+                  <div class="ai-insight-text" id="dash-ai-insight">Vitals are being analyzed against diabetes and cardiac history.</div>
+                  <div class="ai-rec">
+                    <strong>Recommendation:</strong> <span id="dash-ai-rec">Continue daily monitoring and review today's trend.</span>
+                    <div class="health-actions" id="dash-health-actions"></div>
+                  </div>
+                  <div class="action-row-top">
+                    <button class="btn btn-primary btn-sm" onclick="runDashboardAI()">Analyze With AI</button>
+                    <span class="ai-muted" id="ai-source">Railway AI proxy configured</span>
+                  </div>
+                </div>
+                <div class="ai-score" id="dash-ai-score-ring">
+                  <div><strong id="dash-ai-score">78</strong><span>Health Score</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-hdr"><div class="card-ttl" id="dash-trends-title">7-Day Vitals Trend</div><span class="badge badge-teal" id="dash-trends-badge">Manual records</span></div>
+              <div id="dash-ai-trends"></div>
+              <div class="trend-legend">
+                <span><b class="legend-teal">■</b> SpO₂</span>
+                <span><b class="legend-sky">■</b> Pulse</span>
+                <span><b class="legend-amber">■</b> Glucose</span>
+              </div>
+            </div>
+          </div>
+          <div class="grid-4 dash-stats" id="dash-stats"></div>
+          <div class="grid-2">
+            <div>
+              <div class="card" data-roles="doctor">
+                <div class="card-hdr"><div class="card-ttl">Active Alerts</div><button class="btn btn-outline btn-sm" onclick="nav('alerts')">View All</button></div>
+                <div id="dash-alerts"></div>
+              </div>
+              <div class="card" data-roles="doctor">
+                <div class="card-hdr"><div class="card-ttl">Medication Compliance Today</div></div>
+                <div id="dash-meds"></div>
+              </div>
+              <div class="card" data-roles="resident">
+                <div class="card-hdr"><div class="card-ttl">Insurance + マイナンバー</div><button class="btn btn-outline btn-sm" onclick="nav('insurance')">Open</button></div>
+                <div class="info-row"><div class="info-lbl">マイナンバー (My Number)</div><div class="info-val">123456789012</div></div>
+                <div class="info-row"><div class="info-lbl">Policy</div><div class="info-val">介護保険 (Kaigo Hoken) · ¥8,000,000 coverage</div></div>
+                <div class="info-row"><div class="info-lbl">Readiness</div><div class="info-val">次回通院に向けて記録準備済</div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card" data-roles="doctor,resident">
+                <div class="card-hdr"><div class="card-ttl" id="dash-residents-title">Residents</div><button class="btn btn-outline btn-sm" onclick="nav('residents')" id="dash-residents-btn">View All</button></div>
+                <div id="dash-residents"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESIDENTS -->
+        <div class="page" id="page-residents">
+          <div id="res-list-view">
+            <div class="page-hdr"><button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button><div><div class="page-title">Residents</div><div class="page-sub">All registered residents</div></div></div>
+            <div class="filter-row" id="cond-filters">
+              <button class="btn btn-primary btn-sm" onclick="filterRes('All',this)">All</button>
+              <button class="btn btn-outline btn-sm" onclick="filterRes('Stable',this)">Stable</button>
+              <button class="btn btn-outline btn-sm" onclick="filterRes('Monitor',this)">Monitor</button>
+              <button class="btn btn-outline btn-sm" onclick="filterRes('Recovery',this)">Recovery</button>
+            </div>
+            <div id="res-list"></div>
+          </div>
+          <div id="res-detail"></div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="page" id="page-alerts">
+          <div class="page-hdr">
+            <button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button>
+            <div><div class="page-title">Alerts</div><div class="page-sub" id="alerts-sub"></div></div>
+            <button class="btn btn-outline btn-sm" onclick="ackAll()">✓ Acknowledge All</button>
+          </div>
+          <div id="alerts-list"></div>
+        </div>
+
+        <!-- CRITICAL REVIEW -->
+        <div class="page" id="page-critical">
+          <div class="page-hdr">
+            <button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button>
+            <div><div class="page-title">Doctor Critical Review</div><div class="page-sub">Clinical-only view for high-risk residents and sensitive escalation context</div></div>
+          </div>
+          <div id="critical-content"></div>
+        </div>
+
+        <!-- VITALS -->
+        <div class="page" id="page-vitals">
+          <div class="page-hdr">
+            <button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button>
+            <div><div class="page-title">Vitals Monitor</div></div>
+            <button class="btn btn-primary btn-sm" onclick="toggleForm('vform')">+ Record Vitals</button>
+          </div>
+          <div class="res-chips" id="vitals-chips"></div>
+          <div class="form-section" id="vform">
+            <div class="form-title">Record New Vitals</div>
+            <div class="form-grid">
+              <div class="form-group"><label>BP (sys/dia)</label><input id="v-bp" placeholder="128/82"/></div>
+              <div class="form-group"><label>Pulse (bpm)</label><input id="v-pulse" type="number" placeholder="72"/></div>
+              <div class="form-group"><label>SpO₂ (%)</label><input id="v-spo2" type="number" placeholder="97"/></div>
+              <div class="form-group"><label>Temperature (°C)</label><input id="v-temp" type="number" step="0.1" placeholder="36.8"/></div>
+              <div class="form-group"><label>Glucose (mg/dL)</label><input id="v-glucose" type="number" placeholder="142"/></div>
+              <div class="form-group"><label>Weight (kg)</label><input id="v-weight" type="number" step="0.1" placeholder="68"/></div>
+            </div>
+            <div class="form-group field-top"><label>Notes</label><textarea id="v-notes" placeholder="Observations…"></textarea></div>
+            <div class="form-actions">
+              <button class="btn btn-primary" onclick="saveVitals()">💾 Save Vitals</button>
+              <button class="btn btn-outline" onclick="toggleForm('vform')">Cancel</button>
+            </div>
+          </div>
+          <div id="vitals-content"></div>
+        </div>
+
+        <!-- eMAR -->
+        <div class="page" id="page-emar">
+          <div class="page-hdr"><button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button><div><div class="page-title">eMAR</div><div class="page-sub">Medication Administration Record</div></div></div>
+          <div class="res-chips" id="emar-chips"></div>
+          <div id="emar-content"></div>
+        </div>
+
+        <!-- NOTES -->
+        <div class="page" id="page-notes">
+          <div class="page-hdr">
+            <button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button>
+            <div><div class="page-title">Shift Notes</div></div>
+            <button class="btn btn-primary btn-sm" onclick="toggleForm('nform')">+ Add Note</button>
+          </div>
+          <div class="form-section" id="nform">
+            <div class="form-title">New Shift Note</div>
+            <div class="form-group field-bottom"><label>Shift</label><select id="n-shift"><option>Morning</option><option>Afternoon</option><option>Evening</option><option>Night</option></select></div>
+            <div class="form-group field-bottom"><label>Note</label><textarea id="n-note" placeholder="Clinical observations, events, handover notes…"></textarea></div>
+            <div class="form-group field-bottom"><label>Action Items (comma separated)</label><input id="n-tasks" placeholder="Check glucose at 20:00, Physio tomorrow 09:00"/></div>
+            <div class="form-actions">
+              <button class="btn btn-primary" onclick="saveNote()">💾 Save Note</button>
+              <button class="btn btn-outline" onclick="toggleForm('nform')">Cancel</button>
+            </div>
+          </div>
+          <div id="notes-list"></div>
+        </div>
+
+        <!-- LABS -->
+        <div class="page" id="page-labs">
+          <div class="page-hdr"><button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button><div><div class="page-title">Lab Reports</div></div></div>
+          <div class="res-chips" id="labs-chips"></div>
+          <div id="labs-content"></div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="page" id="page-timeline">
+          <div class="page-hdr"><button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button><div><div class="page-title">Clinical Timeline</div></div></div>
+          <div class="res-chips" id="tl-chips"></div>
+          <div id="tl-content"></div>
+        </div>
+
+        <!-- CARE PLAN -->
+        <div class="page" id="page-careplan">
+          <div class="page-hdr"><button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button><div><div class="page-title">Care Plan</div><div class="page-sub">田中 健二 · Room 2階A号室</div></div></div>
+          <div id="careplan-content"></div>
+        </div>
+
+        <!-- APPOINTMENTS -->
+        <div class="page" id="page-appointments">
+          <div class="page-hdr">
+            <button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button>
+            <div><div class="page-title">Appointments</div><div class="page-sub">Doctor availability, AI-priority bookings, and visit status</div></div>
+            <button class="btn btn-primary btn-sm" onclick="openAppointmentModal()">+ Book Appointment</button>
+          </div>
+          <div id="appt-content"></div>
+        </div>
+
+        <!-- BOOK & SCHEDULE -->
+        <div class="page" id="page-book">
+          <div class="page-hdr">
+            <button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button>
+            <div><div class="page-title">Book & Schedule</div><div class="page-sub">Unified appointment booking and weekly care schedule</div></div>
+            <button class="btn btn-primary btn-sm" onclick="openAppointmentModal()">+ Book Appointment</button>
+          </div>
+          <div id="book-content"></div>
+        </div>
+
+        <!-- LEDGER & RESOURCES -->
+        <div class="page" id="page-ledger">
+          <div class="page-hdr">
+            <button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button>
+            <div><div class="page-title">Ledger & Resources</div><div class="page-sub">Financial health ledger, beds, caregivers, equipment, and weekly roster</div></div>
+          </div>
+          <div id="ledger-content"></div>
+        </div>
+
+        <!-- SERVICES -->
+        <div class="page" id="page-services">
+          <div class="page-hdr">
+            <button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button>
+            <div><div class="page-title">Services</div><div class="page-sub">Book care services, home visits, lab collection, transport, pharmacy, and therapy</div></div>
+          </div>
+          <div id="services-content"></div>
+        </div>
+
+        <!-- INSURANCE + マイナンバー -->
+        <div class="page" id="page-insurance">
+          <div class="page-hdr"><button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button><div><div class="page-title">Insurance + マイナンバー</div><div class="page-sub">Policies, digital health identity, and scheme readiness</div></div></div>
+          <div id="insurance-content"></div>
+        </div>
+
+        <!-- AUDIT LOG -->
+        <div class="page" id="page-audit">
+          <div class="page-hdr"><button class="btn btn-outline btn-sm btn-back" onclick="navBack()">← Back</button><div><div class="page-title">Audit Log</div><div class="page-sub">All system activity</div></div></div>
+          <div class="card">
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Resource</th><th>Detail</th></tr></thead>
+                <tbody id="audit-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /main -->
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="toast-stack" id="reminder-toasts"></div>
+
+<div class="modal-backdrop" id="appointment-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">Book Appointment</div>
+        <div class="page-sub" id="appt-modal-sub">Choose patient, doctor, date, and an available slot</div>
+      </div>
+      <button class="modal-close" onclick="closeAppointmentModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Patient</label><select id="appt-patient" onchange="onAppointmentPatientChange()"></select></div>
+        <div class="form-group"><label>Doctor</label><select id="appt-doctor" onchange="refreshSlots()"></select></div>
+        <div class="form-group"><label>Date</label><input id="appt-date" type="date" onchange="refreshSlots()"/></div>
+        <div class="form-group"><label>Reason</label><input id="appt-reason" placeholder="Doctor review"/></div>
+      </div>
+      <div class="appt-badge-row">
+        <span class="badge badge-teal" id="appt-urgency-badge">Routine</span>
+        <button class="btn btn-outline btn-sm" onclick="suggestNearestSlot()">Nearest Slot</button>
+      </div>
+      <div class="card slot-card">
+        <div class="card-hdr card-hdr-tight"><div class="card-ttl">Available Slots</div><span class="badge badge-gray" id="slot-summary">Select date</span></div>
+        <div id="appt-slots" class="slot-grid"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveAppointment()">Book Appointment</button>
+        <button class="btn btn-outline" onclick="closeAppointmentModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="service-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div><div class="modal-title" id="service-modal-title">Book Service</div><div class="page-sub">Common service booking</div></div>
+      <button class="modal-close" onclick="closeServiceModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Service</label><input id="svc-type" readonly/></div>
+        <div class="form-group"><label>Resident</label><select id="svc-resident"></select></div>
+        <div class="form-group"><label>Preferred Date</label><input id="svc-date" type="date"/></div>
+        <div class="form-group"><label>Preferred Time</label><input id="svc-time" type="time"/></div>
+        <div class="form-group"><label>Urgency</label><select id="svc-urgency"><option>Routine</option><option>Urgent</option><option>Emergency</option></select></div>
+        <div class="form-group"><label>Notes</label><input id="svc-notes" placeholder="Special instructions"/></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" onclick="saveServiceBooking()">Book Service</button><button class="btn btn-outline" onclick="closeServiceModal()">Cancel</button></div>
+      <div id="svc-confirm"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="med-order-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div><div class="modal-title">Book Medication Delivery</div><div class="page-sub">On-demand medication refill and delivery</div></div>
+      <button class="modal-close" onclick="closeMedOrderModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mo-resident"/>
+      <div class="form-grid">
+        <div class="form-group"><label>Medication</label><select id="mo-med"></select></div>
+        <div class="form-group"><label>Quantity</label><input id="mo-qty" placeholder="30 tablets"/></div>
+        <div class="form-group"><label>Delivery Date</label><input id="mo-date" type="date"/></div>
+        <div class="form-group"><label>Notes</label><input id="mo-notes" placeholder="Delivery notes"/></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" onclick="saveMedicationOrder()">Submit Order</button><button class="btn btn-outline" onclick="closeMedOrderModal()">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="drawer" id="feature-drawer">
+  <div class="drawer-hdr">
+    <div><div class="modal-title" id="drawer-title">Panel</div><div class="page-sub" id="drawer-sub"></div></div>
+    <button class="modal-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/core.js"></script>
+<script src="assets/js/pages.js"></script>
+<script src="assets/js/features.js"></script>
+</body>
+</html>
